@@ -31,7 +31,27 @@ class Config:
     LLM_API_KEY = os.environ.get('LLM_API_KEY')
     LLM_BASE_URL = os.environ.get('LLM_BASE_URL', 'https://api.openai.com/v1')
     LLM_MODEL_NAME = os.environ.get('LLM_MODEL_NAME', 'gpt-4o-mini')
-    
+    # 可选：覆盖 LLM 请求的 User-Agent。
+    # 部分中转网关的 WAF 会拦截 OpenAI SDK 默认的 "OpenAI/Python" UA，
+    # 设置本项可绕过；留空则使用 SDK 默认值。
+    LLM_USER_AGENT = os.environ.get('LLM_USER_AGENT')
+
+    # 可选：备用（fallback）LLM 配置。
+    # 当主 LLM 在重试后仍失败（如中转网关上游整体不可用）时，自动切换到备用网关。
+    # 三项需同时配置才会启用；留空则禁用 fallback。
+    LLM_FALLBACK_API_KEY = os.environ.get('LLM_FALLBACK_API_KEY')
+    LLM_FALLBACK_BASE_URL = os.environ.get('LLM_FALLBACK_BASE_URL')
+    LLM_FALLBACK_MODEL_NAME = os.environ.get('LLM_FALLBACK_MODEL_NAME')
+
+    @classmethod
+    def has_fallback_llm(cls) -> bool:
+        """是否配置了完整的备用 LLM"""
+        return bool(
+            cls.LLM_FALLBACK_API_KEY
+            and cls.LLM_FALLBACK_BASE_URL
+            and cls.LLM_FALLBACK_MODEL_NAME
+        )
+
     # Zep配置
     ZEP_API_KEY = os.environ.get('ZEP_API_KEY')
     

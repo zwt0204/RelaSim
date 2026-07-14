@@ -1,5 +1,5 @@
 """
-MiroFish Backend 启动入口
+RelaSim Backend 启动入口
 """
 
 import os

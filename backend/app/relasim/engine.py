@@ -1,7 +1,7 @@
 """
 缘推 (RelaSim) 编排器
 
-把整条流水线串起来（对齐 MiroFish 的五阶段工作流）：
+把整条流水线串起来（五阶段工作流）：
 1. 关系图谱构建   PersonaGenerator.build_graph
 2. 环境与人设搭建 （已并入图谱构建；此处仅整理仿真参数）
 3. 关系仿真       RelationSimulator.run
@@ -30,7 +30,7 @@ from .persona_generator import PersonaGenerator
 from .simulator import RelationSimulator
 from .report_generator import ReportGenerator
 
-logger = get_logger('mirofish.relasim.engine')
+logger = get_logger('relasim.engine')
 
 
 @dataclass
@@ -72,6 +72,7 @@ class RelaSimEngine:
         self,
         params: RelaSimInput,
         on_round: Optional[Callable[[RoundResult], None]] = None,
+        on_graph: Optional[Callable[[RelationGraph], None]] = None,
     ) -> RelaSimOutput:
         """
         执行完整推演流程。
@@ -79,6 +80,7 @@ class RelaSimEngine:
         Args:
             params: 推演输入参数
             on_round: 每轮仿真完成的回调（用于流式进度）
+            on_graph: 关系图谱构建完成后的回调（用于把图谱透出给前端可视化/回看）
 
         Returns:
             RelaSimOutput（图谱 + 仿真过程 + 报告）
@@ -94,6 +96,10 @@ class RelaSimEngine:
                 "种子材料中至少需要能识别出 2 个人才能推演关系，"
                 f"当前仅识别到 {len(graph.persons)} 人。"
             )
+
+        # 将构建好的关系图谱透出（供前端在推演过程中渲染/回看此阶段产物）
+        if on_graph:
+            on_graph(graph)
 
         # 若用户给了推演诉求，附加到图谱背景，供仿真与报告参考
         if params.prediction_query:

@@ -1,9 +1,9 @@
 """
-关系仿真引擎（类比 MiroFish 的 OASIS 双平台仿真）
+关系仿真引擎（场景化多轮互动仿真）
 
-与 MiroFish 的区别：
-- 动作空间从"发帖/评论/转发"换成关系动作（发消息/约见面/表白/冷处理/找第三方倾诉）；
-- 平台从 Twitter/Reddit 换成多生活场景（日常/约会/深谈/冲突/外部压力）；
+设计要点：
+- 动作空间为关系动作（发消息/约见面/表白/冷处理/找第三方倾诉）；
+- 覆盖多生活场景（日常/约会/深谈/冲突/外部压力）；
 - 引入 0~100 的连续情感状态变量，单轮互动会更新好感/信任/心结等，
   由此涌现出关系轨迹（升温 / 暧昧 / 捅破窗户纸 / 冷淡 / 决裂）。
 
@@ -31,7 +31,7 @@ from .models import (
     ScenarioType,
 )
 
-logger = get_logger('mirofish.relasim.simulator')
+logger = get_logger('relasim.simulator')
 
 
 # 关系动作空间（类比 Config.OASIS_TWITTER_ACTIONS）

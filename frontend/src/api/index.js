@@ -2,8 +2,12 @@ import axios from 'axios'
 import i18n from '../i18n'
 
 // 创建axios实例
+// 走相对路径 /api：开发态由 vite dev 的 server.proxy 转发到后端 5001，
+// 生产态由反代转发。切勿写死 http://localhost:5001 —— 否则公网域名页里
+// 的浏览器会把 localhost 解析到用户本机（且 https 页面拒绝 http 混合内容），
+// 导致 API 请求全部失败。
 const service = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '',
   timeout: 300000, // 5分钟超时（本体生成可能需要较长时间）
   headers: {
     'Content-Type': 'application/json'

@@ -22,7 +22,7 @@ from .models import (
     AttachmentStyle,
 )
 
-logger = get_logger('mirofish.relasim.store')
+logger = get_logger('relasim.store')
 
 
 # ============ 持久化 ============

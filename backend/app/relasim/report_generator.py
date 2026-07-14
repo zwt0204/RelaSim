@@ -1,5 +1,5 @@
 """
-关系报告生成器（类比 MiroFish 的 ReportAgent）
+关系报告生成器
 
 对仿真后的世界做深度分析，产出概率化的多结局预测报告：
 - 多种可能结局及概率分布；
@@ -7,8 +7,7 @@
 - 每个人对每个人的心理变化曲线（好感/信任/心结/投入随时间）；
 - 风险点、机会点与可操作建议。
 
-与 MiroFish 的区别：报告模板从"舆情传播分析"换成"关系走向预测"，
-并强制附带伦理免责声明（见 RelationReport.disclaimer）。
+报告强制附带伦理免责声明（见 RelationReport.disclaimer）。
 """
 
 from typing import Any, Dict, List, Optional
@@ -23,7 +22,7 @@ from .models import (
     RelationOutcome,
 )
 
-logger = get_logger('mirofish.relasim.report')
+logger = get_logger('relasim.report')
 
 
 _SYSTEM_PROMPT = """你是一位资深的关系分析师，需要基于一段已经推演完成的关系仿真记录，

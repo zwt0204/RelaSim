@@ -14,6 +14,24 @@ export function runRelaSim(data) {
 }
 
 /**
+ * 上传一份补充资料（对话记录等），后端解析为文本返回
+ * @param {File} file
+ * @returns {Promise} data: { filename, chars, truncated, text }
+ */
+export function uploadRelaSimMaterial(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return service({
+    url: '/api/relasim/upload',
+    method: 'post',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
+/**
  * 查询推演任务进度
  * @param {String} taskId
  * @returns {Promise}

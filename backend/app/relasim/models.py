@@ -1,11 +1,11 @@
 """
 缘推 (RelaSim) 数据模型
 
-对齐 MiroFish 的分层：
-- Person        <- 类比 OasisAgentProfile（把"社交平台字段"换成"心理画像字段"）
-- RelationGraph <- 类比 GraphInfo / Zep 关系图谱（人物为节点、情感为边）
-- InjectedEvent <- 类比"上帝视角变量注入"
-- SimulationResult / RelationReport <- 类比仿真结果与 ReportAgent 报告
+分层：
+- Person        人物心理画像
+- RelationGraph 关系图谱（人物为节点、情感为边）
+- InjectedEvent 上帝视角变量注入
+- SimulationResult / RelationReport 仿真结果与关系走向报告
 """
 
 from __future__ import annotations
@@ -103,7 +103,7 @@ class RelationEdge:
 
 @dataclass
 class RelationGraph:
-    """关系图谱：人物节点 + 情感边（类比 MiroFish 的 GraphRAG 图谱）"""
+    """关系图谱：人物节点 + 情感边"""
     graph_id: str
     persons: List[Person] = field(default_factory=list)
     edges: List[RelationEdge] = field(default_factory=list)
@@ -123,7 +123,7 @@ class RelationGraph:
 
 @dataclass
 class InjectedEvent:
-    """上帝视角注入的关系变量（类比 MiroFish 的动态变量注入）"""
+    """上帝视角注入的关系变量"""
     round_index: int                 # 在第几轮注入（0-based）
     description: str                 # 事件描述，如"A 的前任突然回来找 A"
     affected_ids: List[str] = field(default_factory=list)
@@ -201,7 +201,7 @@ class RelationOutcome:
 
 @dataclass
 class RelationReport:
-    """关系走向预测报告（类比 MiroFish 的 ReportAgent 报告）"""
+    """关系走向预测报告"""
     simulation_id: str
     outcomes: List[RelationOutcome] = field(default_factory=list)
     turning_points: List[str] = field(default_factory=list)

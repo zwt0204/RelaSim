@@ -2,7 +2,7 @@
   <div class="relasim-page">
     <!-- 顶部导航 -->
     <nav class="navbar">
-      <div class="nav-brand" @click="goHome">MIROFISH<span class="brand-suffix">/ RELASIM</span></div>
+      <div class="nav-brand" @click="goHome">RELASIM<span class="brand-suffix">关系推演</span></div>
       <div class="nav-links">
         <LanguageSwitcher />
         <span class="nav-divider">|</span>
@@ -47,6 +47,39 @@
                 :disabled="loading"
               ></textarea>
               <span class="model-badge">{{ modelBadge }}</span>
+            </div>
+            <div class="seed-error" v-if="showSeedError || errorMsg">✕ {{ errorMsg || $t('relasim.seedTooShort') }}</div>
+          </div>
+
+          <div class="console-divider"><span>+</span></div>
+
+          <!-- 补充资料上传（对话记录等，可选） -->
+          <div class="console-section">
+            <div class="console-header">
+              <span>{{ $t('relasim.uploadTitle') }}</span>
+              <span class="upload-hint">{{ $t('relasim.uploadHint') }}</span>
+            </div>
+            <div class="upload-area">
+              <input
+                ref="fileInput"
+                type="file"
+                multiple
+                accept=".txt,.md,.markdown,.pdf,.docx,.doc,.csv,.json,.log,.png,.jpg,.jpeg,.webp,.gif,.bmp"
+                class="upload-input"
+                @change="onFilesPicked"
+              />
+              <button class="upload-btn" @click="fileInput && fileInput.click()" :disabled="loading">
+                ↑ {{ $t('relasim.uploadBtn') }}
+              </button>
+              <div class="upload-chips" v-if="attachments.length">
+                <span v-for="(a, i) in attachments" :key="i" class="upload-chip" :class="{ err: a.error }">
+                  <b>{{ a.name }}</b>
+                  <i v-if="a.parsing" class="chip-status">{{ $t('relasim.uploadParsing') }}</i>
+                  <i v-else-if="a.error" class="chip-status">✕ {{ a.error }}</i>
+                  <i v-else class="chip-status ok">{{ a.chars }}{{ $t('relasim.charsUnit') }}{{ a.truncated ? '+' : '' }}</i>
+                  <em class="chip-remove" @click="removeAttachment(i)" v-if="!a.parsing">✕</em>
+                </span>
+              </div>
             </div>
           </div>
 
@@ -141,7 +174,7 @@
         <button
           class="start-btn"
           :class="{ pulsing: canSubmit && !loading }"
-          :disabled="!canSubmit || loading"
+          :disabled="loading"
           @click="start"
         >
           <span class="btn-label">{{ loading ? $t('relasim.submitting') : $t('relasim.submit') }}</span>
@@ -153,14 +186,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
-import { runRelaSim, getRelaSimStatus, getRelaSimResult } from '../api/relasim'
+import { runRelaSim, getRelaSimStatus, getRelaSimResult, uploadRelaSimMaterial } from '../api/relasim'
 
 const router = useRouter()
-const { locale } = useI18n()
+const { locale, t } = useI18n()
 const isZh = computed(() => locale.value === 'zh')
 
 const seed = ref('')
@@ -169,6 +202,7 @@ const rounds = ref(6)
 const timeUnit = ref('周')
 const events = ref([])
 const loading = ref(false)
+const errorMsg = ref('')
 const heroTitleRef = ref(null)
 
 const modelBadge = computed(() => {
@@ -177,6 +211,8 @@ const modelBadge = computed(() => {
 })
 
 const canSubmit = computed(() => seed.value.trim().length > 20)
+// 用户已输入但不足 20 字时给出可见提示（避免「点了没反应」）
+const showSeedError = computed(() => !canSubmit.value && seed.value.trim().length > 0 && !loading.value)
 
 const DEMO_SEED = `林然（女，24 岁）和陈默（男，25 岁）是大学同班同学，毕业两年一直是无话不谈的好朋友。
 林然性格开朗外向，情绪表达直接，遇事喜欢找人倾诉，很在意对方的即时回应，一旦对方冷淡就会胡思乱想。她其实这一年多渐渐对陈默动了心，但怕破坏现在的关系不敢说。
@@ -204,9 +240,49 @@ function removeEvent(i) {
   events.value.splice(i, 1)
 }
 
+// ===== 补充资料上传：选中即解析，成功后随 run 一并提交 =====
+const attachments = ref([]) // { name, text, chars, truncated, parsing, error }
+const fileInput = ref(null)
+const parsingCount = computed(() => attachments.value.filter(a => a.parsing).length)
+async function onFilesPicked(e) {
+  const files = Array.from(e.target.files || [])
+  e.target.value = ''
+  for (const f of files) {
+    if (attachments.value.length >= 10) break
+    const item = { name: f.name, text: '', chars: 0, truncated: false, parsing: true, error: '' }
+    attachments.value.push(item)
+    try {
+      const res = await uploadRelaSimMaterial(f)
+      if (res && res.success && res.data) {
+        item.text = res.data.text
+        item.chars = res.data.chars
+        item.truncated = !!res.data.truncated
+      } else {
+        item.error = (res && res.error) || t('relasim.uploadFailed')
+      }
+    } catch (err) {
+      item.error = (err && err.message) || t('relasim.uploadFailed')
+    } finally {
+      item.parsing = false
+    }
+  }
+}
+function removeAttachment(i) {
+  attachments.value.splice(i, 1)
+}
+
 let pollTimer = null
 async function start() {
-  if (!canSubmit.value || loading.value) return
+  if (loading.value) return
+  if (!canSubmit.value) {
+    errorMsg.value = t('relasim.seedTooShort') || t('relasim.errorSeedRequired')
+    return
+  }
+  errorMsg.value = ''
+  if (parsingCount.value > 0) {
+    errorMsg.value = t('relasim.uploadParsing')
+    return
+  }
   loading.value = true
   try {
     const res = await runRelaSim({
@@ -214,10 +290,14 @@ async function start() {
       prediction_query: query.value,
       rounds: rounds.value,
       time_unit: timeUnit.value,
-      events: events.value
+      events: events.value,
+      attachments: attachments.value
+        .filter(a => !a.error && !a.parsing && a.text)
+        .map(a => ({ name: a.name, text: a.text }))
     })
     if (!res || !res.success || !res.data || !res.data.task_id) {
       loading.value = false
+      errorMsg.value = t('relasim.startFailed')
       return
     }
     const taskId = res.data.task_id
@@ -225,8 +305,12 @@ async function start() {
   } catch (e) {
     console.error('启动推演失败', e)
     loading.value = false
+    errorMsg.value = t('relasim.startFailed')
   }
 }
+
+// 编辑种子材料即清除错误
+watch(seed, () => { if (errorMsg.value) errorMsg.value = '' })
 
 function goHome() {
   router.push('/')
@@ -599,6 +683,31 @@ onUnmounted(() => {
   cursor: not-allowed;
 }
 .btn-arrow { font-size: 1.2rem; }
+.seed-error {
+  margin-top: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: #e11d48;
+  letter-spacing: 0.3px;
+}
+
+/* 补充资料上传 */
+.upload-hint { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: #999; }
+.upload-area { display: flex; flex-direction: column; gap: 10px; }
+.upload-input { display: none; }
+.upload-btn { align-self: flex-start; background: none; border: 1px dashed #BBB; color: #666; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; padding: 8px 18px; cursor: pointer; transition: all .2s; }
+.upload-btn:hover:not(:disabled) { border-color: #FF4500; color: #FF4500; }
+.upload-btn:disabled { opacity: .5; cursor: not-allowed; }
+.upload-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.upload-chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #E0E0E0; background: #FAFAFA; padding: 5px 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; max-width: 100%; }
+.upload-chip b { font-weight: 600; color: #333; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.upload-chip.err { border-color: #fecdd3; background: #fff1f2; }
+.chip-status { font-style: normal; color: #999; }
+.chip-status.ok { color: #16a34a; }
+.upload-chip.err .chip-status { color: #e11d48; }
+.chip-remove { font-style: normal; color: #999; cursor: pointer; padding: 0 2px; }
+.chip-remove:hover { color: #e11d48; }
+
 @keyframes pulse-border {
   0% { box-shadow: 0 0 0 0 rgba(255,69,0,0.25); }
   70% { box-shadow: 0 0 0 8px rgba(255,69,0,0); }

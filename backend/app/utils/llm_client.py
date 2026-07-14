@@ -7,7 +7,13 @@ import json
 import re
 from typing import Optional, Dict, Any, List
 from openai import OpenAI
-from openai import APIConnectionError, APITimeoutError, InternalServerError, RateLimitError
+from openai import (
+    APIConnectionError,
+    APITimeoutError,
+    APIStatusError,
+    InternalServerError,
+    RateLimitError,
+)
 
 from ..config import Config
 from .retry import retry_with_backoff
@@ -23,7 +29,26 @@ _RETRYABLE_LLM_ERRORS = (
 )
 
 
-logger = get_logger('mirofish.llm')
+class UpstreamUnavailableError(RuntimeError):
+    """中转站明确宣告「上游不可用」（如 do_request_failed / upstream_error /
+    auth_unavailable）时抛出。这类故障重试也无济于事，且按网络抖动去退避只会让
+    调用方白等——故绕过 retry 装饰器，直接切到备用网关。故意不放进
+    _RETRYABLE_LLM_ERRORS，使其首次失败即被 retry_with_backoff 放行。"""
+
+    pass
+
+
+# 中转站返回 5xx 时、body 里命中下列任一片段，即判定为「上游不可用」，不重试。
+# 都是各中转站实测过的、明确指向上游接不通/无可用 provider 的文案。
+_UPSTREAM_UNAVAILABLE_MARKERS = (
+    "do_request_failed",
+    "upstream error",
+    "upstream_error",
+    "auth_unavailable",
+    "no auth available",
+)
+
+logger = get_logger('relasim.llm')
 
 
 class LLMClient:
@@ -57,10 +82,15 @@ class LLMClient:
         user_agent = user_agent or Config.LLM_USER_AGENT
         default_headers = {"User-Agent": user_agent} if user_agent else None
 
+        # 不给 timeout 用 SDK 默认 600s：主网关慢/挂时会卡死数分钟不报错、
+        # 也不切 fallback。显式设 (connect, read)，让慢响应快速失败再重试/切换。
+        request_timeout = (8.0, 90.0)
+
         self.client = OpenAI(
             api_key=self.api_key,
             base_url=self.base_url,
-            default_headers=default_headers
+            default_headers=default_headers,
+            timeout=request_timeout,
         )
 
         # 备用网关（可选）：主网关全部失败后才启用
@@ -74,6 +104,7 @@ class LLMClient:
                 api_key=self.fallback_api_key,
                 base_url=self.fallback_base_url,
                 default_headers=default_headers,
+                timeout=request_timeout,
             )
 
     def chat(
@@ -139,12 +170,30 @@ class LLMClient:
                 "messages": messages,
                 "temperature": temperature,
                 "max_tokens": max_tokens,
+                # 备用网关 zhenhaoji 会无视默认值、强制按 SSE 流式返回，
+                # 导致 SDK 拿到非 ChatCompletion 对象、response.choices 报
+                # AttributeError。显式 stream=False 让其走普通 completion。
+                "stream": False,
             }
 
             if response_format:
                 kwargs["response_format"] = response_format
 
-            response = client.chat.completions.create(**kwargs)
+            try:
+                response = client.chat.completions.create(**kwargs)
+            except APIStatusError as e:
+                # 中转站可能用 5xx + body 明确宣告「上游不可用」——这类故障
+                # 不是瞬时抖动，重试也是失败。命中关键词则转成不重试的
+                # UpstreamUnavailableError，让 retry 放行、外层 chat 直接切 fallback。
+                text = str(e).lower()
+                if any(m in text for m in _UPSTREAM_UNAVAILABLE_MARKERS):
+                    logger.warning(
+                        f"网关 {model} 返回上游不可用({getattr(e,'status_code','?')}),"
+                        f"跳过重试直接降级: {str(e)[:120]}"
+                    )
+                    raise UpstreamUnavailableError(str(e)) from e
+                raise  # 其它 5xx（如瞬时 503）照常进入 retry 退避
+
             content = response.choices[0].message.content
             # 部分模型（如MiniMax M2.5）会在content中包含<think>思考内容，需要移除
             content = re.sub(r'<think>[\s\S]*?</think>', '', content).strip()

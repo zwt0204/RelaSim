@@ -1,10 +1,10 @@
 """
-人设生成器（类比 MiroFish 的 OasisProfileGenerator）
+人设生成器（生成人物心理画像）
 
 把用户上传的种子材料（自然语言描述 / 聊天记录片段）解析成结构化的
 Person（心理画像）与 RelationGraph（人物节点 + 情感边）。
 
-与 MiroFish 的区别：字段从"社交平台字段"换成"心理画像字段"，
+字段采用"心理画像字段"，
 本体从"舆情实体"换成"人际关系本体"。
 """
 
@@ -22,7 +22,7 @@ from .models import (
     AttachmentStyle,
 )
 
-logger = get_logger('mirofish.relasim.persona')
+logger = get_logger('relasim.persona')
 
 
 _SYSTEM_PROMPT = """你是一位资深的心理画像分析师，擅长从零散的描述中提炼一个人的性格、

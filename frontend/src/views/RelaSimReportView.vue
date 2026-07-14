@@ -48,7 +48,7 @@
             <p class="calib-sub">{{ statusMsg || $t('relasim.calibrating') }}</p>
           </div>
           <template v-else>
-            <div class="big-time-wrap">
+            <div class="big-time-wrap" v-if="revealDone">
               <span class="big-time" :key="timeIndex">{{ tickLabel(timeIndex) }}</span>
             </div>
             <RelaSimGraph
@@ -62,6 +62,9 @@
               :max-index="latestRoundIndex"
               :following="followLatest"
               :warp="warpFx"
+              :visible-nodes="revealNodes"
+              :ghost-nodes="revealGhost"
+              :visible-edges="revealEdges"
               @scrub="onScrub"
               @now="jumpNow"
             />
@@ -79,18 +82,24 @@
           <button class="arrive-btn" @click="goReport">{{ $t('relasim.viewFullReport') }} →</button>
         </div>
 
-        <!-- 底部：终端小结（最新一条打字机，可上滚回看全部轮） -->
+        <!-- 底部：终端（建档日志 → 逐轮小结 → 报告生成，column-reverse 最新钉底） -->
         <div class="cockpit-term" v-if="phase === 'loading'">
           <span class="term-prompt">> {{ $t('relasim.terminalPrompt') }}</span>
           <div class="term-history">
             <div v-if="currentStage === 'report'" class="term-line">
               <span class="term-text">{{ $t('relasim.reportBuilding') }}<span class="term-caret">▋</span></span>
             </div>
-            <div v-for="(h, i) in terminalHistory" :key="h.idx" class="term-line">
-              <span class="term-time" v-if="h.time_label">{{ h.time_label }}  </span>
-              <span class="term-text">{{ i === 0 ? typedText : h.summary }}<span class="term-caret" v-if="i === 0 && currentStage === 'simulating'">▋</span></span>
+            <div v-else-if="simBusyLine" class="term-line busy">
+              <span class="term-text">{{ simBusyLine }}<span class="term-caret">▋</span></span>
             </div>
-            <div v-if="!terminalHistory.length && currentStage !== 'report'" class="term-line">
+            <div v-for="(h, i) in terminalHistory" :key="'r' + h.idx" class="term-line">
+              <span class="term-time" v-if="h.time_label">{{ h.time_label }}  </span>
+              <span class="term-text">{{ i === 0 ? typedText : h.summary }}<span class="term-caret" v-if="i === 0 && currentStage === 'simulating' && !simBusyLine">▋</span></span>
+            </div>
+            <div v-for="(l, i) in calibLogReversed" :key="'c' + (calibLogReversed.length - i)" class="term-line" :class="l.cls">
+              <span class="term-text">{{ l.text }}<span class="term-caret" v-if="i === 0 && !revealDone && !terminalHistory.length">▋</span></span>
+            </div>
+            <div v-if="!terminalHistory.length && !calibLog.length && currentStage !== 'report'" class="term-line">
               <span class="term-text">{{ statusMsg || $t('relasim.loadingHint') }}<span class="term-caret">▋</span></span>
             </div>
           </div>
@@ -600,8 +609,79 @@ watch(phase, p => {
   if (p === 'loading' || p === 'arrived') nextTick(startStarfield)
   else stopStarfield()
 })
-// 图谱首次亮起 = 时空坐标校准完成，来一次爆发
-watch(hasGraph, v => { if (v) boostWarp(1100) })
+
+// ===== 图谱建档揭晓：分镜头编排（数据已到手，揭晓有节奏）=====
+// -1 = 未启用门控（全部显示）
+const revealNodes = ref(-1)
+const revealGhost = ref(-1)
+const revealEdges = ref(-1)
+const revealDone = ref(true)
+const calibLog = ref([]) // { text, cls } 建档终端日志
+let revealTimers = []
+function rlog(text, cls = '') { calibLog.value.push({ text, cls }) }
+function rt(fn, delay) { revealTimers.push(setTimeout(fn, delay)) }
+const calibLogReversed = computed(() => [...calibLog.value].reverse())
+function runReveal() {
+  const g = relationGraph.value
+  if (!g) return
+  const persons = g.persons || []
+  const edges = g.edges || []
+  // 中途刷新已有轮次数据 / 非推演中：跳过编排直接全量显示
+  if (latestRoundIndex.value >= 0 || phase.value !== 'loading') {
+    revealNodes.value = -1; revealGhost.value = -1; revealEdges.value = -1
+    revealDone.value = true
+    return
+  }
+  revealNodes.value = 0; revealGhost.value = 0; revealEdges.value = 0
+  revealDone.value = false
+  calibLog.value = []
+  let d = 200
+  rt(() => rlog(t('relasim.calibParse')), d); d += 550
+  // 逐句"扫描"关系背景摘要（分析的是用户自己的材料）
+  const ctx = (g.context || '').split('。').map(s => s.trim()).filter(Boolean).slice(0, 3)
+  ctx.forEach(s => { rt(() => rlog('· ' + s + '。', 'scan'), d); d += 450 })
+  // 逐人建档：候选幽灵 → 画像确认
+  persons.forEach((p, i) => {
+    rt(() => {
+      revealGhost.value = i + 1
+      rlog(t('relasim.calibPerson', { i: i + 1, name: p.name || '?' }))
+    }, d); d += 900
+    rt(() => {
+      revealNodes.value = i + 1
+      rlog(t('relasim.calibProfile', {
+        attach: attachLabel(p.attachment_style),
+        trait: (p.personality || '').split(/[，,。]/)[0] || '—'
+      }))
+    }, d); d += 900
+  })
+  // 逐条推断关系
+  edges.forEach((e, j) => {
+    const sn = (persons.find(x => x.person_id === e.source_id) || {}).name || '?'
+    const tn = (persons.find(x => x.person_id === e.target_id) || {}).name || '?'
+    rt(() => {
+      revealEdges.value = j + 1
+      rlog(t('relasim.calibRelation', { a: sn, b: tn, label: e.label || '' }))
+    }, d); d += 1000
+  })
+  rt(() => {
+    revealDone.value = true
+    rlog(t('relasim.calibDone', { n: persons.length, m: edges.length }), 'ok')
+    boostWarp(1100)
+  }, d)
+}
+// 图谱首次亮起 → 启动建档编排
+watch(hasGraph, v => { if (v) runReveal() })
+
+// ===== 仿真"进行中"状态行：等待下一轮时轮播场景提示 =====
+const SCENARIO_HINTS = ['日常互动', '约会相处', '深度对话', '冲突摩擦', '外部压力']
+const busyHintIdx = ref(0)
+let busyTimer = null
+const simBusyLine = computed(() => {
+  if (currentStage.value !== 'simulating' || !revealDone.value) return ''
+  if (latestRoundIndex.value + 1 >= (totalRounds.value || 0)) return ''
+  const n = latestRoundIndex.value + 2
+  return t('relasim.simRoundBusy', { n }) + ' · ' + SCENARIO_HINTS[busyHintIdx.value] + '…'
+})
 
 // 图谱 hover 检视 / 依恋环配色内聚在 RelaSimGraph 组件中
 
@@ -937,6 +1017,7 @@ onMounted(() => {
   if (taskId.value) startPoll()
   else { phase.value = 'error'; errorMsg.value = 'no task id' }
   nextTick(startStarfield)
+  busyTimer = setInterval(() => { busyHintIdx.value = (busyHintIdx.value + 1) % SCENARIO_HINTS.length }, 2200)
 })
 onUnmounted(() => {
   stopPoll()
@@ -946,6 +1027,9 @@ onUnmounted(() => {
   if (warpTimer) { clearTimeout(warpTimer); warpTimer = null }
   if (typeTimer) { clearInterval(typeTimer); typeTimer = null }
   if (warpBoostTimer) { clearTimeout(warpBoostTimer); warpBoostTimer = null }
+  if (busyTimer) { clearInterval(busyTimer); busyTimer = null }
+  revealTimers.forEach(clearTimeout)
+  revealTimers = []
 })
 </script>
 
@@ -1068,6 +1152,9 @@ onUnmounted(() => {
 .term-line { font-size: 0.84rem; line-height: 1.6; color: #BBB; }
 .term-time { color: #666; }
 .term-caret { color: #FF4500; animation: blink 1s step-end infinite; }
+.term-line.scan { color: #666; font-size: 0.76rem; }
+.term-line.ok { color: #16a34a; }
+.term-line.busy { color: #c8763f; }
 .term-history { display: flex; flex-direction: column-reverse; gap: 8px; max-height: 132px; overflow-y: auto; }
 
 /* 白光过场：抵达 → 报告 */

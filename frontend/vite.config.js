@@ -5,6 +5,8 @@ import path from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [vue()],
+  // 应用挂在 /relasim/ 子路径下（公网 zwt.qzz.io/relasim 按路径分流到本服务）
+  base: '/relasim/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),

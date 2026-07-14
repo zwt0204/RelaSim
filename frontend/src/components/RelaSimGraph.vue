@@ -9,19 +9,22 @@
     <!-- ===== 双人：档案对峙 + 关系通道 ===== -->
     <div v-if="isDuel" class="duel" :style="{ gap: duelGap + 'px' }">
       <!-- 左档案卡 -->
-      <div class="dossier" :class="[left.gender, { warp: !!warp }]">
+      <div v-if="nodeState(0) !== 'hidden'" class="dossier" :class="[left.gender, { warp: !!warp, ghost: nodeState(0) === 'ghost' }]">
         <div class="dossier-head">
-          <span class="dossier-avatar" :style="{ background: gradFor(left.gender) }">{{ (left.name || '?').slice(0,1) }}</span>
+          <span class="dossier-avatar" :style="nodeState(0) === 'ghost' ? {} : { background: gradFor(left.gender) }">{{ nodeState(0) === 'ghost' ? '?' : (left.name || '?').slice(0,1) }}</span>
           <div class="dossier-id">
             <div class="dossier-name">{{ left.name }}</div>
-            <div class="dossier-meta">{{ genderSym(left.gender) }} {{ left.age || '—' }}</div>
+            <div class="dossier-meta" v-if="nodeState(0) === 'solid'">{{ genderSym(left.gender) }} {{ left.age || '—' }}</div>
           </div>
         </div>
-        <div class="attach-chip" :style="{ color: attachColor(left.attachment_style), borderColor: attachColor(left.attachment_style) }">{{ attachLabel(left.attachment_style) }}</div>
-        <div class="dossier-tags">
-          <span v-for="(tag, i) in tagsOf(left)" :key="i" class="d-tag">#{{ tag }}</span>
-        </div>
-        <div class="dossier-trigger" v-if="left.triggers">⚠ {{ left.triggers }}</div>
+        <template v-if="nodeState(0) === 'solid'">
+          <div class="attach-chip" :style="{ color: attachColor(left.attachment_style), borderColor: attachColor(left.attachment_style) }">{{ attachLabel(left.attachment_style) }}</div>
+          <div class="dossier-tags">
+            <span v-for="(tag, i) in tagsOf(left)" :key="i" class="d-tag">#{{ tag }}</span>
+          </div>
+          <div class="dossier-trigger" v-if="left.triggers">⚠ {{ left.triggers }}</div>
+        </template>
+        <div v-else class="ghost-lines"><i></i><i></i><i></i></div>
       </div>
 
       <!-- 中央关系通道：上下两条定向能量带 -->
@@ -35,7 +38,7 @@
             <span class="bm"><em>⚡</em><i class="bm-bar"><b :style="{ width: pct(ltr.feeling.tension), background: '#e11d48' }"></b></i>{{ Math.round(ltr.feeling.tension||0) }}</span>
           </div>
         </div>
-        <div class="chan-heart" :class="bondClass">{{ bondSymbol }}</div>
+        <div class="chan-heart" v-if="eLimit > 0" :class="bondClass">{{ bondSymbol }}</div>
         <div class="chan-band rtl" v-if="rtl" @mouseenter="inspect = { type: 'edge', e: rtl }" @mouseleave="inspect = null">
           <div class="band-label">{{ right.name }} <b>→</b> {{ left.name }}</div>
           <div class="band-rel" :style="{ color: rtl.color }">{{ rtl.label }}</div>
@@ -48,19 +51,22 @@
       </div>
 
       <!-- 右档案卡 -->
-      <div class="dossier right" :class="[right.gender, { warp: !!warp }]">
+      <div v-if="nodeState(1) !== 'hidden'" class="dossier right" :class="[right.gender, { warp: !!warp, ghost: nodeState(1) === 'ghost' }]">
         <div class="dossier-head">
-          <span class="dossier-avatar" :style="{ background: gradFor(right.gender) }">{{ (right.name || '?').slice(0,1) }}</span>
+          <span class="dossier-avatar" :style="nodeState(1) === 'ghost' ? {} : { background: gradFor(right.gender) }">{{ nodeState(1) === 'ghost' ? '?' : (right.name || '?').slice(0,1) }}</span>
           <div class="dossier-id">
             <div class="dossier-name">{{ right.name }}</div>
-            <div class="dossier-meta">{{ genderSym(right.gender) }} {{ right.age || '—' }}</div>
+            <div class="dossier-meta" v-if="nodeState(1) === 'solid'">{{ genderSym(right.gender) }} {{ right.age || '—' }}</div>
           </div>
         </div>
-        <div class="attach-chip" :style="{ color: attachColor(right.attachment_style), borderColor: attachColor(right.attachment_style) }">{{ attachLabel(right.attachment_style) }}</div>
-        <div class="dossier-tags">
-          <span v-for="(tag, i) in tagsOf(right)" :key="i" class="d-tag">#{{ tag }}</span>
-        </div>
-        <div class="dossier-trigger" v-if="right.triggers">⚠ {{ right.triggers }}</div>
+        <template v-if="nodeState(1) === 'solid'">
+          <div class="attach-chip" :style="{ color: attachColor(right.attachment_style), borderColor: attachColor(right.attachment_style) }">{{ attachLabel(right.attachment_style) }}</div>
+          <div class="dossier-tags">
+            <span v-for="(tag, i) in tagsOf(right)" :key="i" class="d-tag">#{{ tag }}</span>
+          </div>
+          <div class="dossier-trigger" v-if="right.triggers">⚠ {{ right.triggers }}</div>
+        </template>
+        <div v-else class="ghost-lines"><i></i><i></i><i></i></div>
       </div>
     </div>
 
@@ -76,7 +82,7 @@
           <radialGradient id="rg-grad-u" cx="35%" cy="30%" r="80%"><stop offset="0%" stop-color="#9ca3af" /><stop offset="100%" stop-color="#4b5563" /></radialGradient>
         </defs>
         <circle v-for="(d, i) in bgDots" :key="'bg' + i" :cx="d.x" :cy="d.y" r="1.1" class="bg-dot" :style="{ opacity: d.o, animationDelay: d.delay + 'ms' }" />
-        <g v-for="e in edges" :key="e.key">
+        <g v-for="e in shownEdges" :key="e.key">
           <path class="graph-edge-glow" :d="e.d" :style="{ stroke: e.color, strokeWidth: (e.width * 3.2) + 'px', animationDelay: (e.delay + 300) + 'ms' }" />
           <path class="graph-edge" :d="e.d" pathLength="1" marker-end="url(#rg-arrow)" :style="{ stroke: e.color, strokeWidth: e.width + 'px', animationDelay: e.delay + 'ms' }" />
           <path class="graph-edge-flow" :d="e.d" :style="{ animationDelay: (e.delay % 900) + 'ms' }" />
@@ -84,15 +90,24 @@
           <text class="graph-edge-label" :x="e.lx" :y="e.ly" text-anchor="middle" :style="{ animationDelay: (e.delay + 500) + 'ms' }">{{ e.label }}</text>
           <text class="graph-edge-vals" :x="e.lx" :y="e.ly + 13" text-anchor="middle" :style="{ animationDelay: (e.delay + 650) + 'ms' }">❤{{ Math.round(e.feeling.affection || 0) }} ⚡{{ Math.round(e.feeling.tension || 0) }}</text>
         </g>
-        <g v-for="(nd, i) in nodes" :key="nd.person_id" class="graph-node" :style="{ animationDelay: (i * 180) + 'ms' }" @mouseenter="inspect = { type: 'person', p: nd }" @mouseleave="inspect = null">
-          <circle :cx="nd.x" :cy="nd.y" :r="R + 17" class="orbit-ring" :style="{ animationDelay: (i * -3000) + 'ms' }" />
-          <circle :cx="nd.x" :cy="nd.y" :r="R + 9" class="node-halo" :class="nd.gender" :style="{ animationDelay: (i * 700) + 'ms' }" />
-          <circle :cx="nd.x" :cy="nd.y" :r="R + 5" fill="none" :stroke="attachColor(nd.attachment_style)" stroke-width="1.5" stroke-dasharray="4 3" class="graph-node-ring" />
-          <circle :cx="nd.x" :cy="nd.y" :r="R" class="graph-node-circle" :fill="gradFor(nd.gender)" />
-          <text :x="nd.x" :y="nd.y + 7" text-anchor="middle" class="graph-node-char">{{ (nd.name || '?').slice(0, 1) }}</text>
-          <text :x="nd.x" :y="nd.y + R + 20" text-anchor="middle" class="graph-node-name">{{ nd.name }}</text>
-          <text :x="nd.x" :y="nd.y + R + 34" text-anchor="middle" class="graph-node-sub">{{ genderSym(nd.gender) }} {{ nd.age || '—' }} · {{ attachLabel(nd.attachment_style) }}</text>
-        </g>
+        <template v-for="(nd, i) in nodes" :key="nd.person_id">
+          <g v-if="nodeState(i) !== 'hidden'" class="graph-node" :class="{ ghost: nodeState(i) === 'ghost' }" :style="{ animationDelay: '0ms' }" @mouseenter="inspect = { type: 'person', p: nd }" @mouseleave="inspect = null">
+            <template v-if="nodeState(i) === 'solid'">
+              <circle :cx="nd.x" :cy="nd.y" :r="R + 17" class="orbit-ring" :style="{ animationDelay: (i * -3000) + 'ms' }" />
+              <circle :cx="nd.x" :cy="nd.y" :r="R + 9" class="node-halo" :class="nd.gender" :style="{ animationDelay: (i * 700) + 'ms' }" />
+              <circle :cx="nd.x" :cy="nd.y" :r="R + 5" fill="none" :stroke="attachColor(nd.attachment_style)" stroke-width="1.5" stroke-dasharray="4 3" class="graph-node-ring" />
+              <circle :cx="nd.x" :cy="nd.y" :r="R" class="graph-node-circle" :fill="gradFor(nd.gender)" />
+              <text :x="nd.x" :y="nd.y + 7" text-anchor="middle" class="graph-node-char">{{ (nd.name || '?').slice(0, 1) }}</text>
+              <text :x="nd.x" :y="nd.y + R + 20" text-anchor="middle" class="graph-node-name">{{ nd.name }}</text>
+              <text :x="nd.x" :y="nd.y + R + 34" text-anchor="middle" class="graph-node-sub">{{ genderSym(nd.gender) }} {{ nd.age || '—' }} · {{ attachLabel(nd.attachment_style) }}</text>
+            </template>
+            <template v-else>
+              <circle :cx="nd.x" :cy="nd.y" :r="R" class="graph-node-ghost" />
+              <text :x="nd.x" :y="nd.y + 7" text-anchor="middle" class="graph-node-char ghost-char">?</text>
+              <text :x="nd.x" :y="nd.y + R + 20" text-anchor="middle" class="graph-node-name">{{ nd.name }}</text>
+            </template>
+          </g>
+        </template>
       </svg>
     </div>
 
@@ -149,9 +164,24 @@ const props = defineProps({
   maxIndex: { type: Number, default: -1 },
   following: { type: Boolean, default: false },
   warp: { type: Object, default: null },
-  dark: { type: Boolean, default: false }
+  dark: { type: Boolean, default: false },
+  // 建档揭晓门控：-1=全部显示；n=只显示前 n 个（ghost 为“候选态”上限）
+  visibleNodes: { type: Number, default: -1 },
+  ghostNodes: { type: Number, default: -1 },
+  visibleEdges: { type: Number, default: -1 }
 })
 defineEmits(['scrub', 'now'])
+
+// 揭晓门控计算
+const nLimit = computed(() => (props.visibleNodes < 0 ? props.nodes.length : Math.max(0, props.visibleNodes)))
+const gLimit = computed(() => (props.ghostNodes < 0 ? props.nodes.length : Math.max(nLimit.value, props.ghostNodes)))
+const eLimit = computed(() => (props.visibleEdges < 0 ? props.edges.length : Math.max(0, props.visibleEdges)))
+const shownEdges = computed(() => props.edges.slice(0, eLimit.value))
+function nodeState(i) {
+  if (i < nLimit.value) return 'solid'
+  if (i < gLimit.value) return 'ghost'
+  return 'hidden'
+}
 
 const { t } = useI18n()
 const W = 760
@@ -178,9 +208,15 @@ function tagsOf(p) {
 const isDuel = computed(() => props.nodes.length === 2)
 const left = computed(() => props.nodes[0] || {})
 const right = computed(() => props.nodes[1] || {})
-// 按名字方向分配上下能量带
-const ltr = computed(() => props.edges.find(e => e.sourceName === left.value.name && e.targetName === right.value.name) || null)
-const rtl = computed(() => props.edges.find(e => e.sourceName === right.value.name && e.targetName === left.value.name) || null)
+// 按名字方向分配上下能量带（受揭晓门控约束）
+const ltr = computed(() => {
+  const e = props.edges.find(x => x.sourceName === left.value.name && x.targetName === right.value.name)
+  return e && props.edges.indexOf(e) < eLimit.value ? e : null
+})
+const rtl = computed(() => {
+  const e = props.edges.find(x => x.sourceName === right.value.name && x.targetName === left.value.name)
+  return e && props.edges.indexOf(e) < eLimit.value ? e : null
+})
 // 两卡间距随双向好感均值变化：越亲近越靠拢（80~360px）
 const duelGap = computed(() => {
   const a = ((ltr.value?.feeling.affection || 50) + (rtl.value?.feeling.affection || 50)) / 2
@@ -225,6 +261,16 @@ const curLabel = computed(() => {
 .dossier.warp { animation: dossier-jolt .7s ease; }
 @keyframes dossier-jolt { 0%{ transform: translateX(0); } 30%{ transform: translateX(-4px); } 60%{ transform: translateX(3px); } 100%{ transform: translateX(0); } }
 .dossier.right { text-align: right; }
+/* 候选幽灵态：识别中的人物（虚线框 + ? 头像 + 骨架行） */
+.dossier.ghost { border-style: dashed; opacity: .8; animation: ghost-in .4s ease both; }
+.dossier.ghost .dossier-avatar { background: transparent; border: 1.5px dashed #999; color: #999; }
+.dossier.ghost .dossier-name { color: #999; }
+.ghost-lines { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.ghost-lines i { display: block; height: 8px; background: linear-gradient(90deg, rgba(150,150,150,.18), rgba(150,150,150,.34), rgba(150,150,150,.18)); background-size: 200% 100%; animation: ghost-shimmer 1.2s linear infinite; }
+.ghost-lines i:nth-child(2) { width: 72%; }
+.ghost-lines i:nth-child(3) { width: 48%; }
+@keyframes ghost-in { from { opacity: 0; transform: translateY(6px); } to { opacity: .8; transform: none; } }
+@keyframes ghost-shimmer { 0% { background-position: 0 0; } 100% { background-position: -200% 0; } }
 .dossier-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .dossier.right .dossier-head { flex-direction: row-reverse; }
 .dossier-avatar { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #fff; font-size: 1.15rem; flex-shrink: 0; box-shadow: 0 0 14px rgba(255,69,0,.25); }
@@ -238,11 +284,13 @@ const curLabel = computed(() => {
 
 /* 中央关系通道 */
 .channel { flex: 1; min-width: 150px; display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
-.chan-band { border: 1px solid #EAEAEA; background: #FBFBFB; padding: 8px 12px; cursor: pointer; transition: border-color .2s; }
+.chan-band { border: 1px solid #EAEAEA; background: #FBFBFB; padding: 8px 12px; cursor: pointer; transition: border-color .2s; animation: band-in .5s ease both; }
 .chan-band:hover { border-color: #FF4500; }
+@keyframes band-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .band-label { font-family: 'JetBrains Mono', monospace; font-size: 0.66rem; color: #888; }
 .band-label b { color: #FF4500; }
-.band-rel { font-size: 0.8rem; font-weight: 600; margin: 2px 0 6px; }
+.band-rel { font-size: 0.8rem; font-weight: 600; margin: 2px 0 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 100%; animation: rel-type 1s steps(22) both .2s; }
+@keyframes rel-type { from { max-width: 0; } to { max-width: 100%; } }
 .band-flow { position: relative; height: 3px; background: linear-gradient(90deg, rgba(0,0,0,.05), rgba(0,0,0,.12)); overflow: hidden; margin-bottom: 8px; }
 .band-flow i { position: absolute; top: -1px; width: 16px; height: 5px; background: linear-gradient(90deg, transparent, var(--c), transparent); animation: flow-x 1.1s linear infinite; }
 .band-flow i:nth-child(2){ animation-delay: .37s; } .band-flow i:nth-child(3){ animation-delay: .74s; }
@@ -253,7 +301,8 @@ const curLabel = computed(() => {
 .bm { display: inline-flex; align-items: center; gap: 5px; font-family: 'JetBrains Mono', monospace; font-size: 0.66rem; color: #555; }
 .bm em { font-style: normal; }
 .bm-bar { width: 46px; height: 5px; background: #EEE; display: inline-block; overflow: hidden; }
-.bm-bar b { display: block; height: 100%; transition: width .7s ease; }
+.bm-bar b { display: block; height: 100%; transition: width .7s ease; transform-origin: left; animation: bar-grow .9s ease both .35s; }
+@keyframes bar-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 .chan-heart { text-align: center; font-size: 1.3rem; }
 .chan-heart.warm { color: #FF4500; animation: heart-beat 1.4s ease-in-out infinite; }
 .chan-heart.strain { color: #e11d48; animation: heart-shake .5s ease-in-out infinite; }
@@ -286,6 +335,10 @@ const curLabel = computed(() => {
 .graph-node-char { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; fill: #fff; pointer-events: none; }
 .graph-node-name { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 700; fill: #333; }
 .graph-node-sub { font-family: 'JetBrains Mono', monospace; font-size: 9px; fill: #999; }
+/* SVG 幽灵候选节点 */
+.graph-node-ghost { fill: none; stroke: #999; stroke-width: 1.5; stroke-dasharray: 5 4; }
+.ghost-char { fill: #999; }
+.graph-node.ghost .graph-node-name { fill: #999; }
 @keyframes edge-draw { to { stroke-dashoffset: 0; } }
 @keyframes g-fade-in { to { opacity: 1; } }
 @keyframes done-pop { 0%{ opacity:0; transform: scale(.4); } 100%{ opacity:1; transform: scale(1); } }
@@ -336,6 +389,8 @@ const curLabel = computed(() => {
 .dark .time-cur { color: #EEE; }
 /* 双人暗色 */
 .dark .dossier { background: rgba(20,20,22,.85); border-color: #333; }
+.dark .dossier.ghost { border-color: #555; }
+.dark .dossier.ghost .dossier-avatar { border-color: #666; color: #777; }
 .dark .dossier-name { color: #EEE; }
 .dark .dossier-meta { color: #888; }
 .dark .d-tag { color: #ff7a45; background: rgba(255,69,0,.14); }

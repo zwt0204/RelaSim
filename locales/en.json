@@ -766,6 +766,12 @@
     "calibrating": "Calibrating · identifying persons",
     "arrived": "Arrived",
     "destReport": "REPORT",
-    "viewFullReport": "View full report"
+    "viewFullReport": "View full report",
+    "calibParse": "Parsing seed material…",
+    "calibPerson": "Person {i} identified: {name}",
+    "calibProfile": "Profile: {attach} · {trait}",
+    "calibRelation": "Inferred: {a} → {b} · {label}",
+    "calibDone": "✔ Calibration complete: {n} persons / {m} relations",
+    "simRoundBusy": "Simulating round {n}"
   }
 }

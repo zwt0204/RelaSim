@@ -766,6 +766,12 @@
     "calibrating": "校准时空坐标 · 识别人物关系",
     "arrived": "抵达",
     "destReport": "终点·报告",
-    "viewFullReport": "查看完整报告"
+    "viewFullReport": "查看完整报告",
+    "calibParse": "解析种子材料…",
+    "calibPerson": "识别到人物 {i}：{name}",
+    "calibProfile": "心理画像：{attach} · {trait}",
+    "calibRelation": "推断关系：{a} → {b}「{label}」",
+    "calibDone": "✔ 校准完成：{n} 人 / {m} 段关系",
+    "simRoundBusy": "第 {n} 轮推演中"
   }
 }

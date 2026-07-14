@@ -9,11 +9,7 @@ const routes = [
     component: RelaSimView
   },
   {
-    path: '/relasim',
-    redirect: '/'
-  },
-  {
-    path: '/relasim/run/:taskId',
+    path: '/run/:taskId',
     name: 'RelaSimRun',
     component: RelaSimReportView,
     props: true
@@ -21,7 +17,8 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  // base 取自 vite 的 base（/relasim/），最终 URL 形如 zwt.qzz.io/relasim/run/<id>
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes
 })
 

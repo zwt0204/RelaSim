@@ -1,203 +1,83 @@
 <div align="center">
 
-<img src="./static/image/MiroFish_logo_compressed.jpeg" alt="MiroFish Logo" width="75%"/>
+# RelaSim · 缘推
 
-<a href="https://trendshift.io/repositories/16144" target="_blank"><img src="https://trendshift.io/api/badge/repositories/16144" alt="666ghj%2FMiroFish | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+**人际关系发展推演引擎 —— 把一段关系放进数字沙盘,预演它的未来**
 
-简洁通用的群体智能引擎，预测万物
-</br>
-<em>A Simple and Universal Swarm Intelligence Engine, Predicting Anything</em>
-
-<a href="https://www.shanda.com/" target="_blank"><img src="./static/image/shanda_logo.png" alt="666ghj%2FMiroFish | Shanda" height="40"/></a>
-
-[![GitHub Stars](https://img.shields.io/github/stars/666ghj/MiroFish?style=flat-square&color=DAA520)](https://github.com/666ghj/MiroFish/stargazers)
-[![GitHub Watchers](https://img.shields.io/github/watchers/666ghj/MiroFish?style=flat-square)](https://github.com/666ghj/MiroFish/watchers)
-[![GitHub Forks](https://img.shields.io/github/forks/666ghj/MiroFish?style=flat-square)](https://github.com/666ghj/MiroFish/network)
-[![Docker](https://img.shields.io/badge/Docker-Build-2496ED?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/666ghj/MiroFish)
-
-[![Discord](https://img.shields.io/badge/Discord-Join-5865F2?style=flat-square&logo=discord&logoColor=white)](http://discord.gg/ePf5aPaHnA)
-[![X](https://img.shields.io/badge/X-Follow-000000?style=flat-square&logo=x&logoColor=white)](https://x.com/mirofish_ai)
-[![Instagram](https://img.shields.io/badge/Instagram-Follow-E4405F?style=flat-square&logo=instagram&logoColor=white)](https://www.instagram.com/mirofish_ai/)
-
-[English](./README.md) | [中文文档](./README-ZH.md)
+<em>Simulate how a relationship evolves — multi-agent role-play, week by week.</em>
 
 </div>
 
-## ⚡ Overview
+---
 
-**MiroFish** is a next-generation AI prediction engine powered by multi-agent technology. By extracting seed information from the real world (such as breaking news, policy drafts, or financial signals), it automatically constructs a high-fidelity parallel digital world. Within this space, thousands of intelligent agents with independent personalities, long-term memory, and behavioral logic freely interact and undergo social evolution. You can inject variables dynamically from a "God's-eye view" to precisely deduce future trajectories — **rehearse the future in a digital sandbox, and win decisions after countless simulations**.
+## ⚡ 它做什么
 
-> You only need to: Upload seed materials (data analysis reports or interesting novel stories) and describe your prediction requirements in natural language</br>
-> MiroFish will return: A detailed prediction report and a deeply interactive high-fidelity digital world
+用自然语言描述两个(或多个)真实的人和他们的关系现状,RelaSim 会:
 
-### Our Vision
+1. **建立关系图谱** —— LLM 从种子材料中识别人物,生成心理画像(性格 / 依恋类型 / 情感需求 / 雷区),并量化双向情感状态(好感 / 信任 / 依赖 / 张力 / 投入,0~100)
+2. **逐周仿真演化** —— 多智能体按各自人设在日常互动、约会、深谈、冲突、外部压力等场景中逐轮互动,情感数值随每轮更新;支持"上帝视角"注入事件(如"第 3 周他拿到外地 offer")
+3. **生成预测报告** —— 多结局概率分布、关键转折点、心理变化曲线、风险与建议,并附伦理免责声明
+4. **与当事人对话** —— 推演结束后可以直接和数字分身聊天,验证 TA 的想法
 
-MiroFish is dedicated to creating a swarm intelligence mirror that maps reality. By capturing the collective emergence triggered by individual interactions, we break through the limitations of traditional prediction:
+### 推演过程即体验
 
-- **At the Macro Level**: We are a rehearsal laboratory for decision-makers, allowing policies and public relations to be tested at zero risk
-- **At the Micro Level**: We are a creative sandbox for individual users — whether deducing novel endings or exploring imaginative scenarios, everything can be fun, playful, and accessible
+推演不是转圈等待,而是一段**暗色时光舱之旅**:星场穿梭背景、人物档案逐个"识别→确认"、双人档案对峙 + 关系能量带实时演变、时间轴滑块可穿梭回看任意时刻的关系状态、终端逐字打出每轮小结,抵达后再展开完整报告。
 
-From serious predictions to playful simulations, we let every "what if" see its outcome, making it possible to predict anything.
+## 🖥️ 技术栈
 
-## 🌐 Live Demo
+| 层 | 技术 |
+|---|---|
+| 后端 | Python 3.11+ / Flask,OpenAI 格式 LLM 调用(任意兼容网关),PyMuPDF 文件解析 |
+| 前端 | Vue 3 + Vite,vue-router / vue-i18n(中英),Canvas 星场 + SVG 图谱自绘 |
+| 存储 | 无数据库,推演结果落盘 JSON(`backend/uploads/relasim/`) |
 
-Welcome to visit our online demo environment and experience a prediction simulation on trending public opinion events we've prepared for you: [mirofish-live-demo](https://666ghj.github.io/mirofish-demo/)
+## 🚀 快速开始
 
-## 📸 Screenshots
+### 1. 配置环境变量
 
-<div align="center">
-<table>
-<tr>
-<td><img src="./static/image/Screenshot/运行截图1.png" alt="Screenshot 1" width="100%"/></td>
-<td><img src="./static/image/Screenshot/运行截图2.png" alt="Screenshot 2" width="100%"/></td>
-</tr>
-<tr>
-<td><img src="./static/image/Screenshot/运行截图3.png" alt="Screenshot 3" width="100%"/></td>
-<td><img src="./static/image/Screenshot/运行截图4.png" alt="Screenshot 4" width="100%"/></td>
-</tr>
-<tr>
-<td><img src="./static/image/Screenshot/运行截图5.png" alt="Screenshot 5" width="100%"/></td>
-<td><img src="./static/image/Screenshot/运行截图6.png" alt="Screenshot 6" width="100%"/></td>
-</tr>
-</table>
-</div>
-
-## 🎬 Demo Videos
-
-### 1. Wuhan University Public Opinion Simulation + MiroFish Project Introduction
-
-<div align="center">
-<a href="https://www.bilibili.com/video/BV1VYBsBHEMY/" target="_blank"><img src="./static/image/武大模拟演示封面.png" alt="MiroFish Demo Video" width="75%"/></a>
-
-Click the image to watch the complete demo video for prediction using BettaFish-generated "Wuhan University Public Opinion Report"
-</div>
-
-### 2. Dream of the Red Chamber Lost Ending Simulation
-
-<div align="center">
-<a href="https://www.bilibili.com/video/BV1cPk3BBExq" target="_blank"><img src="./static/image/红楼梦模拟推演封面.jpg" alt="MiroFish Demo Video" width="75%"/></a>
-
-Click the image to watch MiroFish's deep prediction of the lost ending based on hundreds of thousands of words from the first 80 chapters of "Dream of the Red Chamber"
-</div>
-
-> **Financial Prediction**, **Political News Prediction** and more examples coming soon...
-
-## 🔄 Workflow
-
-1. **Graph Building**: Seed extraction & Individual/collective memory injection & GraphRAG construction
-2. **Environment Setup**: Entity relationship extraction & Persona generation & Agent configuration injection
-3. **Simulation**: Dual-platform parallel simulation & Auto-parse prediction requirements & Dynamic temporal memory updates
-4. **Report Generation**: ReportAgent with rich toolset for deep interaction with post-simulation environment
-5. **Deep Interaction**: Chat with any agent in the simulated world & Interact with ReportAgent
-
-## 🚀 Quick Start
-
-### Option 1: Source Code Deployment (Recommended)
-
-#### Prerequisites
-
-| Tool | Version | Description | Check Installation |
-|------|---------|-------------|-------------------|
-| **Node.js** | 18+ | Frontend runtime, includes npm | `node -v` |
-| **Python** | ≥3.11, ≤3.12 | Backend runtime | `python --version` |
-| **uv** | Latest | Python package manager | `uv --version` |
-
-#### 1. Configure Environment Variables
-
-```bash
-# Copy the example configuration file
-cp .env.example .env
-
-# Edit the .env file and fill in the required API keys
-```
-
-**Required Environment Variables:**
+项目根目录建 `.env`:
 
 ```env
-# LLM API Configuration (supports any LLM API with OpenAI SDK format)
-# Recommended: Alibaba Qwen-plus model via Bailian Platform: https://bailian.console.aliyun.com/
-# High consumption, try simulations with fewer than 40 rounds first
-LLM_API_KEY=your_api_key
-LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
-LLM_MODEL_NAME=qwen-plus
-
-# Zep Cloud Configuration
-# Free monthly quota is sufficient for simple usage: https://app.getzep.com/
-ZEP_API_KEY=your_zep_api_key
+LLM_API_KEY=sk-xxx                # 必填,OpenAI 格式 API Key
+LLM_BASE_URL=https://api.openai.com/v1
+LLM_MODEL_NAME=gpt-4o-mini        # 需支持视觉(图片补充资料转录)
+# 可选:备用网关(主网关故障时自动切换)
+# LLM_FALLBACK_API_KEY= / LLM_FALLBACK_BASE_URL= / LLM_FALLBACK_MODEL_NAME=
 ```
 
-#### 2. Install Dependencies
+### 2. 启动后端(:5001)
 
 ```bash
-# One-click installation of all dependencies (root + frontend + backend)
-npm run setup:all
+cd backend
+pip install -r requirements.txt
+python run.py
 ```
 
-Or install step by step:
+### 3. 启动前端(:3000)
 
 ```bash
-# Install Node dependencies (root + frontend)
-npm run setup
-
-# Install Python dependencies (backend, auto-creates virtual environment)
-npm run setup:backend
-```
-
-#### 3. Start Services
-
-```bash
-# Start both frontend and backend (run from project root)
+cd frontend
+npm install
 npm run dev
 ```
 
-**Service URLs:**
-- Frontend: `http://localhost:3000`
-- Backend API: `http://localhost:5001`
+访问 `http://localhost:3000/relasim/`(应用挂在 `/relasim/` 子路径下,便于与其它服务共享域名做路径分流)。
 
-**Start Individually:**
+## 📡 API 概览
 
-```bash
-npm run backend   # Start backend only
-npm run frontend  # Start frontend only
-```
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| POST | `/api/relasim/run` | 启动推演(seed_material / prediction_query / rounds / time_unit / events / attachments) |
+| GET | `/api/relasim/run/status?task_id=` | 轮询进度(含图谱与每轮情感快照,驱动前端实时演变) |
+| GET | `/api/relasim/<relasim_id>` | 完整结果(图谱 + 逐轮仿真 + 报告) |
+| POST | `/api/relasim/upload` | 上传补充资料,解析为文本(txt / md / pdf / docx / doc / csv / json / log / 常见图片 — 图片走视觉 LLM 转录聊天截图) |
+| POST | `/api/relasim/chat` | 与推演中的人物对话 |
+| GET | `/api/relasim/history` | 历史推演列表 |
 
-### Option 2: Docker Deployment
+## ⚠️ 免责声明
 
-```bash
-# 1. Configure environment variables (same as source deployment)
-cp .env.example .env
+本项目基于用户提供的信息进行**虚构推演**,仅供娱乐与自我觉察参考,不代表真实的人的真实想法。请勿据此对现实关系做操纵性决策;上传的聊天记录等内容会发送给 LLM 处理,请注意隐私。
 
-# 2. Pull image and start
-docker compose up -d
-```
+## 📄 License
 
-Reads `.env` from root directory by default, maps ports `3000 (frontend) / 5001 (backend)`
-
-> Mirror address for faster pulling is provided as comments in `docker-compose.yml`, replace if needed.
-
-## 📬 Join the Conversation
-
-<div align="center">
-<img src="./static/image/QQ群.png" alt="QQ Group" width="60%"/>
-</div>
-
-&nbsp;
-
-The MiroFish team is recruiting full-time/internship positions. If you're interested in multi-agent simulation and LLM applications, feel free to send your resume to: **mirofish@shanda.com**
-
-## 📄 Acknowledgments
-
-**MiroFish has received strategic support and incubation from Shanda Group!**
-
-MiroFish's simulation engine is powered by **[OASIS (Open Agent Social Interaction Simulations)](https://github.com/camel-ai/oasis)**, We sincerely thank the CAMEL-AI team for their open-source contributions!
-
-## 📈 Project Statistics
-
-<a href="https://www.star-history.com/#666ghj/MiroFish&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=666ghj/MiroFish&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=666ghj/MiroFish&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=666ghj/MiroFish&type=date&legend=top-left" />
- </picture>
-</a>
+AGPL-3.0

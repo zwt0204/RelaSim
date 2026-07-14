@@ -198,7 +198,7 @@ const isZh = computed(() => locale.value === 'zh')
 
 const seed = ref('')
 const query = ref('')
-const rounds = ref(6)
+const rounds = ref(3)
 const timeUnit = ref('周')
 const events = ref([])
 const loading = ref(false)

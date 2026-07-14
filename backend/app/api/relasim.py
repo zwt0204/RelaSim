@@ -176,7 +176,7 @@ def run_simulation():
         {
             "seed_material": "人物与关系的自然语言描述",  // 必填
             "prediction_query": "推演诉求",              // 可选
-            "rounds": 6,                                 // 可选，默认 6
+            "rounds": 3,                                 // 可选，默认 3
             "time_unit": "周",                           // 可选，默认 周
             "events": [                                  // 可选，上帝视角注入事件
                 {"round_index": 3, "description": "...", "affected_ids": []}
@@ -205,7 +205,7 @@ def run_simulation():
             seed_material = seed_material + supplement[:ATTACHMENTS_TOTAL_CHARS]
             logger.info(f"随推演附带补充资料 {len(supplement)} 字")
 
-        rounds = int(data.get('rounds', 6))
+        rounds = int(data.get('rounds', 3))
         rounds = max(1, min(rounds, 20))  # 限制 1~20 轮，避免过度消耗
         time_unit = data.get('time_unit', '周')
         prediction_query = data.get('prediction_query', '')

@@ -6,6 +6,8 @@
 
 <em>Simulate how a relationship evolves — multi-agent role-play, week by week.</em>
 
+<img src="./docs/shots/02-cockpit.png" alt="RelaSim 时光舱推演" width="90%"/>
+
 </div>
 
 ---
@@ -22,6 +24,10 @@
 ### 推演过程即体验
 
 推演不是转圈等待,而是一段**暗色时光舱之旅**:星场穿梭背景、人物档案逐个"识别→确认"、双人档案对峙 + 关系能量带实时演变、时间轴滑块可穿梭回看任意时刻的关系状态、终端逐字打出每轮小结,抵达后再展开完整报告。
+
+|  输入种子材料  |  抵达 · 完整报告  |
+|:---:|:---:|
+| <img src="./docs/shots/01-input.png" alt="输入页" width="100%"/> | <img src="./docs/shots/03-report.png" alt="报告页" width="100%"/> |
 
 ## 🖥️ 技术栈
 
